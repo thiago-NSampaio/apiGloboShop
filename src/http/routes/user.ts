@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { FastifyInstance } from "fastify";
-import AppError from "../utils/AppError";
+import AppError from "../../utils/AppError";
 const { hash, compare } = require("bcryptjs")
 
 export async function User(app:FastifyInstance) {
@@ -14,8 +14,8 @@ export async function User(app:FastifyInstance) {
 
         const { name, email, password } = createUserBody.parse(req.body);
 
-        if (!email) {
-            throw new AppError("Informe um email.")
+        if (!email || !name || !password) {
+            throw new AppError("Informe nome, email e senha!.")
         }
 
         // Criptografia a senha inserida pelo usuário.
@@ -103,5 +103,27 @@ export async function User(app:FastifyInstance) {
         });
 
         return reply.status(201).send({ user: userUpdate });
+    })
+
+    app.delete('/user/:userId', async (req, reply) => {
+        const getUserParams = z.object({
+            userId: z.string().uuid()
+        });
+
+        const { userId } = getUserParams.parse(req.params);
+        
+        const deleteUser = await prisma.user.delete({
+            where: {
+              id: userId
+            }
+        });
+        
+        if (deleteUser) {
+            return reply.status(200)
+        } else {
+            throw new AppError('Não foi possível excluir o usuário');
+        }
+          
+
     })
 }
