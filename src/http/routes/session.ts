@@ -2,7 +2,9 @@ import { FastifyInstance } from "fastify";
 import { z } from 'zod';
 import { prisma } from "../../lib/prisma";
 import AppError from "../../utils/AppError";
-const {compare} = require("bcryptjs")
+import { auth as authConfig } from "../../configs/auth";
+const { compare } = require("bcryptjs")
+const {sign} = require("jsonwebtoken")
 
 export async function Session(app: FastifyInstance) {
     app.post('/session', async (req, reply) => {
@@ -19,8 +21,6 @@ export async function Session(app: FastifyInstance) {
             }
         });
 
-        console.log(user)
-
         const passwordMatched = await compare(password, user?.password)
 
         if (!passwordMatched) {
@@ -31,6 +31,13 @@ export async function Session(app: FastifyInstance) {
             return new AppError("Credenciais inválidas");
         }
 
-        return reply.send(user);
+        const { secret, expiresIn } = authConfig.jwt;
+        
+        const token = sign({}, secret, {
+            subject: String(user.id),
+            expiresIn
+        });
+        
+        return reply.send({user, token});
     });
 }

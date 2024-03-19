@@ -30,13 +30,13 @@ export async function User(app:FastifyInstance) {
         return reply.status(201).send({ user: user });
     })
 
-    app.put('/users/:userId', async (req, reply) => {
+    app.put('/users/', async (req, reply) => {
         // Valida se o id do usuário passado na URL é um UUID.
-        const getUserParams = z.object({
+        const getUser = z.object({
             userId: z.string().uuid()
         });
 
-        const {userId} = getUserParams.parse(req.params)
+        const {userId} = getUser.parse(req.params)
 
         const getUserBody = z.object({
             name: z.string(),
